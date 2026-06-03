@@ -5,8 +5,8 @@
 #SBATCH --mail-type=BEGIN
 #SBATCH --mail-type=END
 #SBATCH --mail-user=rohering@uni-potsdam.de
-#SBATCH --output=/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/logs/2_2_CHELSA_regional_monthly_stacks.log
-#SBATCH --error=/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/logs/2_2_CHELSA_regional_monthly_stacks_error.log
+#SBATCH --output=/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/logs/05_create_missing_monthly_1km-stacks_output.log
+#SBATCH --error=/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/logs/05_create_missing_monthly_1km-stacks_error.log
 #SBATCH --nodelist=ecoc9z
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
