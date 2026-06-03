@@ -1,0 +1,3 @@
+send this to terminal on HPC:
+
+sbatch /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/04_check_set_scoff_per_file.sh

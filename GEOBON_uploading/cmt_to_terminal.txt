@@ -1,0 +1,3 @@
+send this to terminal:
+
+sbatch /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/GEOBON_uploading/sync_Transfer-GeobServ_Europe_monthly_rsds_1979-2016.sbatch

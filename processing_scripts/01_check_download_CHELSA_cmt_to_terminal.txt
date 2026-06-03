@@ -1,0 +1,3 @@
+send this to terminal:
+
+sbatch /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/01_check_download_missing_CHELSA2.1.-files.sh

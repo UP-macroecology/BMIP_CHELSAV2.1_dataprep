@@ -1,0 +1,3 @@
+send this to terminal on HPC:
+
+sbatch /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/02_check_corrupt_CHELSA-files.sh
