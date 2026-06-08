@@ -94,7 +94,7 @@ overview_list <- df_all_files %>%
 # Log-File -----------------------
 cat("=== CHELSA DOWNLOADS FILE INVENTORY LOG ===\n")
 cat("All files:", nrow(df_all_files), "\n")
-cat("\nBAD FILES (<135MB):", nrow(df_small_files), "\n\n")
+cat("\nBAD FILES:", nrow(df_small_files), "\n\n")
 
 # variables
 for(var_name in names(overview_list)) {
