@@ -7,6 +7,7 @@ library(tidyverse)
 
 ## Path to root folder of downloaded CHELSA files
 #path.to.root = "/mnt/local_chelsa02/Hauer_BMIP_data/CHELSA_downloads/downloading_new_data/"  #for local testing
+#path.to.root = "/mnt/local_chelsa02/CHELSA_downloads/" # for local testing
 path.to.root = "/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/CHELSA_downloads/"
 
 ## Path where to download to
@@ -150,7 +151,9 @@ while (length(missing.files) != 0) {
       ) %>%
       print(n = 100)
     
+    ## downloaded files which are expected but missing 
     missing.files = all.files[which(!all.files %in% current.files)]
+    print(paste0("Files which are missing (without pr and without 2025):", missing.files[-grep("/pr/",missing.files)]))
     
     ## send download request for missing files -----------
     for (i in missing.files) {
