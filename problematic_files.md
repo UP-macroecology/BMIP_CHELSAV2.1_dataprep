@@ -1,3 +1,4 @@
+# State 2026-06-08
 # CHELSA V2.1 daily files with issues
 
 `CHELSA_rsds_04_12_1990_V.2.1.tif` produces `band 1: IReadBlock failed at X offset 0, Y offset 6883: TIFFReadEncodedStrip() failed.` in QGIS

@@ -104,11 +104,11 @@ cat("\n=========================================\n")
 
 # DELETE FILES ------------------------
 
-files_to_delete <- df_files_to_delete$full_path
-
-if (length(files_to_delete) > 0) {
-  cat("Deleting", length(files_to_delete), "files\n")
-  file.remove(files_to_delete)
-} else {
-  cat("No files to delete\n")
-}
+# files_to_delete <- df_files_to_delete$full_path
+# 
+# if (length(files_to_delete) > 0) {
+#   cat("Deleting", length(files_to_delete), "files\n")
+#   file.remove(files_to_delete)
+# } else {
+#   cat("No files to delete\n")
+# }

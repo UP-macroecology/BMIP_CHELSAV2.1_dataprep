@@ -4,7 +4,7 @@
 #SBATCH --job-name=checkdlymnthly
 #SBATCH --mail-type=BEGIN
 #SBATCH --mail-type=END
-#SBATCH --mail-user=rohering@uni-potsdam.de
+#SBATCH --mail-user=rohering@uni-potsdam.de,hauer@uni-potsdam.de
 #SBATCH --output=/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/logs/03_check_DAILY-MONTHLY_output.log
 #SBATCH --error=/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/logs/03_check_DAILY-MONTHLY_error.log
 #SBATCH --nodelist=ecoc9z
