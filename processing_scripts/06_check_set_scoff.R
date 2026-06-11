@@ -165,7 +165,10 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"),.combine = c) 
     terra::scoff(r_processed) <- scoff_j
     
     # write back to same file
-    terra::writeRaster(r_processed, file_path_j, overwrite = TRUE)
+    terra::writeRaster(r_processed, file_path_j, overwrite = TRUE,
+                       # expliciltly set scoff values when writing to file again!!
+                       scale  = scoff_j[, 1], 
+                       offset = scoff_j[, 2])
   } # close loop over files
 } # close parallel loop
   
