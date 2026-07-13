@@ -12,6 +12,6 @@
 #SBATCH --ntasks=1
 #SBATCH --time=5-00:00:00
 #SBATCH --cpus-per-task=15
-#SBATCH --mem=50gb
+#SBATCH --mem=150gb
 
 Rscript  /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/2_2_CHELSA_MONTHLY_1.R --verbose
