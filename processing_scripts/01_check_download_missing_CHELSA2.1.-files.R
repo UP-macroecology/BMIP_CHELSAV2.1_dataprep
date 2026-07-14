@@ -67,7 +67,7 @@ while (length(missing.files) != 0) {
       by = 3600 * 24
     ))
     file.ext = "V.2.1.tif"
-    all.vars = c(unique(state.current.data$variable), "pr", "prec", "rsds") %>%
+    all.vars = c(unique(state.current.data$variable), "hurs", "prec", "rsds") %>%
       unique()
     
     all.files = lapply(all.vars, function(x)
