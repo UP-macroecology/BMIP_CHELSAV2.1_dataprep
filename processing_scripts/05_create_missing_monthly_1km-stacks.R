@@ -38,7 +38,6 @@ library(lubridate)
 # if set to FASLE it will only calculate missing years per variable and region. 
 run_for_all_years <- FALSE # set to FALSE for missing years only!
 
-## Define variables --------
 resolution <- 1   # determines monthly calculations (1km spatial resolution)
 regions <- c("Australia", "Europe", "USA", "Finland")
 method_name <- "monthly_1km"
@@ -89,7 +88,7 @@ all_years <- 1941:2025
 all_files <- list.files(file.path(file_dir), pattern = ".tif", full.names = TRUE, recursive = T)
 
 # remove the variable pr - if you want to include it, just outcomment this line
-all_files <- all_files[-grep("/pr/", all_files)]
+if(length(grep("/pr/", all_files)>0))all_files <- all_files[-grep("/pr/", all_files)]
 
 # simplify names
 names(all_files) <- gsub("_V.2.1.tif", "", basename(all_files))
