@@ -46,6 +46,11 @@ library(lubridate)
 # if set to FASLE it will only calculate missing years per variable and region. 
 run_for_all_years <- FALSE # set to FALSE for missing years only!
 
+## Exclude specific variable -----------
+var.to.exclude = NULL
+var.to.exclude = c("hurs","pr") # outcomment to keep all downloaded varr or list vars to exclude
+
+
 
 ## parameters --------------------------------------------------------------
 
@@ -54,7 +59,7 @@ regions <- c("Australia", "Europe", "USA", "Finland")
 method_name <- "monthly_1km"
 n_cores <- as.integer(Sys.getenv("SLURM_CPUS_PER_TASK"))  # number of cores to be used
 # all years in workflow
-all_years <- 1941:2025
+all_years <- 1941:2024
 
 # ## CRS Information
 # # define the Equal Area CRS used per region 
@@ -85,8 +90,6 @@ region_folder_names <- data.frame(
 )
 
 
-
-
 # -------------------------------------------------------------------------
 
 # 2. FILE LISTING ---------------------------------------------------------
@@ -95,9 +98,6 @@ region_folder_names <- data.frame(
 ## list all CHELSA daily files after download ------------------------------
 
 all_files <- list.files(file.path(file_dir), pattern = ".tif", full.names = TRUE, recursive = T)
-
-# remove the variable pr - if you want to include it, just outcomment this line
-if(length(grep("/pr/", all_files)>0))all_files <- all_files[-grep("/pr/", all_files)]
 
 # simplify names
 names(all_files) <- gsub("_V.2.1.tif", "", basename(all_files))
@@ -131,7 +131,8 @@ year_summary <- df %>%
     )) + 1,
     complete = n_files == expected_days
   ) %>%
-  arrange(variable,year)
+  arrange(variable,year) %>%
+  filter(!variable%in%var.to.exclude)
 
 
 # overview of variables and completely downloaded years of raw data
@@ -257,10 +258,13 @@ if (run_for_all_years) {
 # -------------------------------------------------------------------------
 
 # 3. Set Up Parallel Processing -------------------------------------------
+if(!is.null(var.to.exclude)){
+  year_summary = year_summary %>% filter(!variable %in% var.to.exclude)
+}
 
 ## split full data in even chunks to be send to the workers -----
 l <- dim(year_summary %>%
-  filter(complete == T))[1] # length of year ~ variable combinations of completly downloaded data
+  filter(complete == T))[1] # length of year ~ variable combinations of completely downloaded data
 x <- round(l/n_cores) # chunk size of tasks send to each worker
 from <- seq(1,l,x)
 to <- lead(from) - 1
