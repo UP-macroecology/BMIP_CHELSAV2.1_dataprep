@@ -46,8 +46,11 @@ resolution <- 10    # determines daily (10km resolution) calculations
 regions <- c("Australia", "Europe", "USA", "Finland")
 method_name <- "daily_10km" # which processing methods (daily, monthly, bioclim...)
 n_cores <- as.integer(Sys.getenv("SLURM_CPUS_PER_TASK"))  # number of cores to be used
-all_years <- 1941:2025
+all_years <- 1941:2024
 
+## Exclude specific variable -----------
+var.to.exclude = NULL
+var.to.exclude = c("hurs","pr") # outcomment to keep all downloaded varr or list vars to exclude
 
 ## directories -------------------------------------------------------------
 
@@ -122,7 +125,8 @@ year_summary <- df %>%
     )) + 1,
     complete = n_files == expected_days
   ) %>%
-  arrange(variable,year)
+  arrange(variable,year)%>%
+  filter(!variable%in%var.to.exclude)
 
 # overview of variables and completely downloaded years of raw data
 complete_data <- year_summary %>% 
