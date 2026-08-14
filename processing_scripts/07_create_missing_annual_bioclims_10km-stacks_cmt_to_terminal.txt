@@ -1,3 +1,0 @@
-send this to terminal on HPC:
-
-sbatch /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/2_3_2_create_missing_annual_bioclims_10km-stacks.sh

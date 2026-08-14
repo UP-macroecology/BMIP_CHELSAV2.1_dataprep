@@ -63,6 +63,8 @@ mask_files <- list.files(file.path(mask_dir),
                            ".*", resolution, # spatial resolution
                            "km\\.tif$"), full.names = TRUE)
 
+# only select the LAEA masks
+mask_files <- mask_files[-grep("EPSG4326", mask_files)]
 
 
 # list all files ------------------------------
