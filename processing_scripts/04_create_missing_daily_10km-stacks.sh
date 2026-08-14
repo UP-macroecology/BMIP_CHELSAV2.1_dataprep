@@ -11,7 +11,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --time=5-00:00:00
-#SBATCH --cpus-per-task=10
-#SBATCH --mem=100gb	
+#SBATCH --cpus-per-task=5
+#SBATCH --mem=550gb	
 
 Rscript  /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/04_create_missing_daily_10km-stacks.R --verbose

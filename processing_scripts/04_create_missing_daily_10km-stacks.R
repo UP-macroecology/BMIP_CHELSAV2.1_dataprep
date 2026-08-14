@@ -133,6 +133,7 @@ complete_data <- year_summary %>%
   group_by(variable, complete) %>%
   reframe(n_years = n())
   
+print(paste0("Tempdir is: ", tempdir()))
 print("Overview of complete CHELSA data")
 print(complete_data)
 
@@ -266,27 +267,33 @@ idx_df
 # 4. Start Parallel Processing ---------------------------------------------
 
 ## start parallel processing loop ------------------------------------------
-foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"), .combine = c) %dopar% {
-  
-  year_summary_sub <- year_summary %>%
+cfun <- function(a, b) NULL
+foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse") , .combine = 'cfun'
+               ) %dopar% {
+
+terra::terraOptions(threads = 1)
+
+    year_summary_sub <- year_summary %>%
     filter(complete == T) %>%
     slice(idx_df$from[i]:idx_df$to[i])
-  
+    #slice(idx_df$from[i]:idx_df$from[i]+1)
+
+### loop over regions ------------------------------------------------
+  for (region in regions) {
+    
+    
+    
+    # load region specific mask file
+    mask_file_laea <- region_masks_meta[[region]]$mask_laea_file 
+    mask_file_4326 <- region_masks_meta[[region]]$mask_4326_file
+    mask_laea <- terra::rast(mask_file_laea) # read in mask at equal area
+    mask_4326 <- terra::rast(mask_file_4326)  
   
   ## loop over variables -------------------------------------------------
-  for (var_name in unique(year_summary_sub$variable)) {
+for (var_name in unique(year_summary_sub$variable)) {
+  cat("\nProcessing", var_name, "for" ,region, "-----------------------\n")
     
-    
-    ### loop over regions ------------------------------------------------
-    for (region in regions) {
-      
-      cat("\nProcessing", var_name, "for" ,region, "-----------------------\n")
-      
-      # load region specific mask file
-      mask_file_laea <- region_masks_meta[[region]]$mask_laea_file 
-      mask_file_4326 <- region_masks_meta[[region]]$mask_4326_file
-      mask_laea <- terra::rast(mask_file_laea) # read in mask at equal area
-      mask_4326 <- terra::rast(mask_file_4326) # read in mask at wgs84
+# read in mask at wgs84
       
       # Create region output directory
       region_out_dir <- file.path(out_dir, region_folder_names[[region]],  
@@ -342,13 +349,24 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"), .combine = c)
         terra::time(yearly_stack) <- times
         
         #define gain or scale factor of the mask to be same as in the original files
-        scoff(mask_laea) <- scoff(yearly_stack[[1]]) # changed = to <- assignment
+        scoff(mask_laea) <- scoff(yearly_stack[[1]]) 
         
-        yearly_stack <- terra::crop(yearly_stack, mask_4326)
-        
+        yearly_stack_crp <- terra::crop(yearly_stack, mask_4326#, 
+                                    #filename = tempfile(fileext = ".tif"),
+                                    #overwrite = TRUE
+                                    )
+        rm(yearly_stack)
         # Process: project + mask + write
-        yearly_eq <- terra::project(yearly_stack, mask_laea, method = "average")
-        yearly_masked <- terra::mask(yearly_eq, mask_laea)
+        yearly_eq <- terra::project(yearly_stack_crp, mask_laea, method = "average"#,
+                                    #filename = tempfile(fileext = ".tif"), 
+                                    #overwrite = TRUE
+                                    )
+        rm(yearly_stack_crp) 
+        
+        # yearly_masked <- terra::mask(yearly_eq, mask_laea, 
+        #                              filename = tempfile(fileext = ".tif", tmpdir = "temp"), overwrite = TRUE)
+        # rm(yearly_eq)
+        # gc()
         
         
         # Output filename: YEAR.tif
@@ -357,11 +375,15 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"), .combine = c)
         
         
         # Write yearly stack
-        terra::writeRaster(yearly_masked, out_file, overwrite = T)
+        yearly_mask = terra::mask(yearly_eq, mask_laea,
+                    filename = tempfile(fileext = ".tif"), 
+                    overwrite = TRUE)
+        terra::writeRaster(yearly_mask, out_file, overwrite = T)
         cat("Saved yearly stack:", basename(out_file), "\n")
         
         # Memory cleanup
-        rm(yearly_stack, yearly_eq, yearly_masked, times)
+        rm(yearly_mask, times)
+        tmpFiles(remove = T)
         gc()
         
       } # close loop over complete years
