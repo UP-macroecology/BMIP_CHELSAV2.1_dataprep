@@ -1,9 +1,10 @@
 library(terra)
-library(raster)
-library(dismo)
+# library(raster)
+# library(dismo)
 library(tidyverse)
 library(doParallel)
 library(foreach)
+library(predicts)
 
 # ==============================================================================
 # BMIP - Processing Climate Data  
@@ -39,7 +40,7 @@ out_dir <- file.path(transfer_dir, "GEOBON_results") # it diversifies later in l
 regions <- c("Australia", "Europe", "USA", "Finland")
 method_name <- "annual_bioclim_1km" # the method used in this script
 clim_method <- "monthly_1km" # previous method used to process climate data
-n_cores <- 15 # number of cores to be used
+n_cores <- as.integer(Sys.getenv("SLURM_CPUS_PER_TASK")) # number of cores to be used
 var_names <- c("prec", "tasmin","tasmax") # only those needed for bioclim calc. -> using "prec" now
 
 ## match region folder names
@@ -52,12 +53,12 @@ region_folder_names <- data.frame(
 
 
 ##--------------- TESTING SETUP ---------
-testing <- FALSE
+testing <- TRUE
 
 if (testing) {
   cat("\nTEST MODE ------------------------------")
   #out_dir <- "/import/ecoc9z/data-zurell/hauer/BMIP/testing/" # it diversifies later in loop
-  out_dir <- "/home/josh/Dokumente/HiWi/MacroEco/BMIP/testing/" # it diversifies later in loop
+  out_dir <- "/home/josh/Dokumente/HiWi/MacroEco/BMIP/bioclim-testing/" # it diversifies later in loop
   regions <- "Australia"
   n_cores <- 3
 }
@@ -191,7 +192,7 @@ if (testing) {
 registerDoParallel(cl)
 
 # paralellize per worker ----------------
-foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse", "dismo", "raster"), .combine = c) %dopar% {
+foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse", "predicts"), .combine = c) %dopar% {
                  
   # get keys for this chunk
   chunk_key <- chunks[[i]]
@@ -203,7 +204,12 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse", "dismo", "rast
   ## loop over regions --------
   for(reg in regions) {
     
-    cat(paste("\nProcessing", reg, "-------------------------------\n"))
+    if (!reg %in% df_years_to_process_sub$region) {
+      cat(reg, "not within this chunk - continue with next region in loop")
+      next
+    } else {
+      cat(paste("\nProcessing", reg, "-------------------------------\n"))
+    }
     
     # Create region output directory
     region_out_dir <- file.path(out_dir, region_folder_names[[reg]],  
@@ -252,27 +258,27 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse", "dismo", "rast
       tasmin_terra <- tasmin_terra - 273.15
       tasmax_terra <- tasmax_terra - 273.15
       
-      # Convert SpatRaster objects to RasterStack (for use with dismo::biovars)
-      pr_raster <- raster::stack(pr_terra)    # Stack as RasterStack
-      tasmin_raster <- raster::stack(tasmin_terra) # Stack as RasterStack
-      tasmax_raster <- raster::stack(tasmax_terra) # Stack as RasterStack
+      # # Convert SpatRaster objects to RasterStack (for use with dismo::biovars)
+      # pr_raster <- raster::stack(pr_terra)    # Stack as RasterStack
+      # tasmin_raster <- raster::stack(tasmin_terra) # Stack as RasterStack
+      # tasmax_raster <- raster::stack(tasmax_terra) # Stack as RasterStack
       
       # Check if the RasterStacks have 12 monthly layers each
-      if (raster::nlayers(pr_raster) != 12 | 
-          raster::nlayers(tasmin_raster) != 12 | 
-          raster::nlayers(tasmax_raster) != 12) {
+      if (nlyr(pr_terra) != 12 | 
+          nlyr(tasmin_terra) != 12 | 
+          nlyr(tasmax_terra) != 12) {
         cat(paste("Error: Missing Layers in climate RasterStacks for year: ", yr))
         stop("Error: Missing Layers...")
       }
       
       # Calculate the bioclimatic variables using the dismo::biovars function
-      bioclim_raster <- dismo::biovars(prec = pr_raster, 
-                                       tmin = tasmin_raster, 
-                                       tmax = tasmax_raster)
+      bioclim_terra <- predicts::bcvars(prec = pr_terra, 
+                                        tmin = tasmin_terra, 
+                                        tmax = tasmax_terra)
       
       
-      # Convert the result to a terra object for saving
-      bioclim_terra <- terra::rast(bioclim_raster)
+      # # Convert the result to a terra object for saving
+      # bioclim_terra <- terra::rast(bioclim_raster)
       
       cat(paste("\nBioclims calculated for year:", yr,  
                 "and region:", reg, "--------\n"))
@@ -286,7 +292,7 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse", "dismo", "rast
                   overwrite = TRUE)
       
       # clean workspace
-      rm(pr_raster, tasmin_raster, tasmax_raster, 
+      rm(# pr_raster, tasmin_raster, tasmax_raster, 
          pr_terra, tasmin_terra,  tasmax_terra, 
          pr_file, tasmin_file,  tasmax_file, bioclim_raster, bioclim_terra)
       gc()
