@@ -254,7 +254,6 @@ if (run_for_all_years) {
 
 
 
-
 # -------------------------------------------------------------------------
 
 # 3. Set Up Parallel Processing -------------------------------------------
@@ -375,7 +374,7 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"), .combine = co
           month_stack <- terra::rast(month_files)
           
           #define gain or scale factor of the mask to be same as in the original files
-          scoff(mask_laea) <- scoff(month_stack[[1]]) # changed = to <- assignment
+          #scoff(mask_laea) <- scoff(month_stack[[1]]) 
           
           # crop the global daily stack to region mask first 
           month_stack <- terra::crop(month_stack, mask_4326)
@@ -393,7 +392,11 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"), .combine = co
             month_final <- mean(month_mask, na.rm = TRUE)
           }
           
-        
+          # check if scoff got lost
+          #if(!scoff(month_final)[1] == scoff(month_stack[[1]])[1]){
+          #  scoff(month_final) <- scoff(month_stack[[1]])
+          #}
+          
           # rename and put into yearly stack
           names(month_final) <- paste0(var_name, "_01_", sprintf("%02d", m), "_", yr)
           times <- as.Date(gsub(paste0(var_name,"_"), "",names(month_final)), format = "%d_%m_%Y")
@@ -402,7 +405,7 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"), .combine = co
           yearly_stack[[m]] <- month_final
           
           
-          rm(month_data, month_files, month_stack, month_eq, month_final)
+          rm(month_data, month_files, month_eq, month_final)
           gc()
           
         } # end loop over months

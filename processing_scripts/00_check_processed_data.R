@@ -18,29 +18,14 @@ transfer_dir <- "/mnt/local_chelsa02/Hauer_BMIP_data/" #testing on Linux local m
 ## Get overview of missing data:
 file_dir <- file.path(transfer_dir, "CHELSA_downloads", "chelsa02", "chelsa", "global", "daily") # from here it's sorted after variables
 
-# check and correct mask files ---------------
-mask_dir <- file.path(transfer_dir, "mask_files")
-region <- "Europe"
-res <- 1
-proji <- "EPSG4326"#"buffer"#"EPSG4326"
+all_dirs <- list.dirs(transfer_dir)
 
-mask_file <- list.files(mask_dir, pattern = region, full.names = T)
-mask_file <- mask_file[grep(proji,mask_file)]
-mask_file <- mask_file[grep(paste0(res,"km"),mask_file)]
-
-yr_mask = rast(mask_file)
-plot(yr_mask)
-foo <- ifel(yr_mask < 100000000,0,10) # For Europe EPSG4326
-foo <- ifel(yr_mask >=0,10,yr_mask) # For Europe buffer
-plot(foo)
-scoff(foo)[[1]]<-0.1
-
-writeRaster(foo, file = paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
-"mask_",region,"_",proji,"_",res,"km_01.tif"),overwrite=T)
 
 # check all variables and methods (takes very very long) -----
 
-all_dirs <- list.dirs(transfer_dir)
+
+
+
 methods <- c("monthly_1km")
 variables <- c("prec","rsds","tas","tasmin","tasmax") # "hurs"
 for(i in methods){
@@ -146,7 +131,7 @@ all_dirs <- list.dirs(transfer_dir)
 monthly_dirs <- all_dirs[grep("monthly_1km",all_dirs)]
 #monthly_dirs < all_dirs[grep("monthly_10km",all_dirs)]
 
-variable <- "tasmin"
+variable <- "prec"
 monthly_files <- list.files(monthly_dirs, full.names = TRUE, pattern = "\\.tif$")
 #monthly_files <- monthly_files[-grep("pr",monthly_files)]
 #monthly_files <- list.files(monthly_dirs,full.names = T)
@@ -154,8 +139,8 @@ monthly_files <- list.files(monthly_dirs, full.names = TRUE, pattern = "\\.tif$"
 monthly_files <- monthly_files[grep(variable,monthly_files)]
 #monthly_files <- monthly_files[grep("prec",monthly_files)]
 
-#monthly_files <- monthly_files[grep("Europe",monthly_files)]
-monthly_files <- monthly_files[grep("Finnish",monthly_files)]
+monthly_files <- monthly_files[grep("Australia",monthly_files)]
+#monthly_files <- monthly_files[grep("Finnish",monthly_files)]
 #monthly_files <- monthly_files[1:4]
 
 ### read and summarise --------------
@@ -204,13 +189,52 @@ mask_file <- list.files(mask_dir, pattern = region, full.names = T)
 mask_file <- mask_file[grep("EPSG4326",mask_file)]
 mask_file <- mask_file[grep(paste0(res,"km"),mask_file)]
 
+proj_file <- list.files(mask_dir, pattern = region, full.names = T)
+proj_file <- proj_file[grep("buffer",proj_file)]
+proj_file <- proj_file[grep(paste0(res,"km"),proj_file)]
+
 yr_fld <- all_dirs[grep(var,all_dirs)]
 yr_fld <- yr_fld[grep("CHELSA_downloads",yr_fld)]
 yr_fld <- yr_fld[grep(yr,yr_fld)]
 
 year_stack <- rast(list.files(yr_fld,full.names = T)) 
 year_mask <- rast(mask_file)
-region_year_stack <- crop(year_stack,year_mask)
-mean.yr <- global(region_year_stack, mean, maxcell = 1e4)
-mean(mean.yr$mean)
+region_year_stack <- crop(year_stack[[1]],year_mask)
+#mean.yr <- global(region_year_stack, mean, maxcell = 1e4)
+#mean(mean.yr$mean)
 
+year_proj <- rast(proj_file)
+year_proj <- terra::project(region_year_stack,year_proj)
+
+plot(year_proj)
+# check and correct mask files ---------------
+
+mask_dir <- file.path(transfer_dir, "mask_files")
+region <- "Europe"
+res <- 10
+proji <- "EPSG4326"#"buffer"#"EPSG4326"
+
+mask_file <- list.files(mask_dir, pattern = region, full.names = T)
+mask_file <- mask_file[grep(proji,mask_file)]
+mask_file <- mask_file[grep(paste0(res,"km"),mask_file)]
+
+yr_mask = rast(mask_file)
+plot(yr_mask)
+#foo <- ifel(yr_mask < 100000000,0,10) # For Europe EPSG4326
+#foo <- ifel(yr_mask >=0,10,yr_mask) # For Europe buffer
+foo <- ifel(yr_mask > 0,1,yr_mask) # For redoing
+plot(foo)
+
+# writeRaster(foo, file = paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
+#                                "mask_",region,"_",proji,"_",res,"km_01.tif"),
+#             scale  = 0.1, 
+#             offset = 0,
+#             overwrite=T)
+# 
+# fin <- rast( paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
+#                     "mask_",region,"_",proji,"_",res,"km_01.tif"))
+plot(fin)
+scoff(fin)
+
+
+# mask behaviour
