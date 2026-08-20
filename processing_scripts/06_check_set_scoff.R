@@ -15,6 +15,7 @@ transfer_dir <- "/mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/" # for cluster
 
 # processed files 
 file_dir <- file.path(transfer_dir, "GEOBON_results") # splits into regions next
+
 # original chelsa files
 chelsa_dir <- file.path(transfer_dir, "CHELSA_downloads")
 
@@ -23,9 +24,10 @@ chelsa_dir <- file.path(transfer_dir, "CHELSA_downloads")
 # out_dir <- file.path(transfer_dir, "processing_extra_out") # it diversifies later in loop
 
 ## Set arguments ----
-mthds <- c("daily_10km", "monthly_1km")
-n_cores <- 10
-
+mthds <- c("monthly_1km")
+n_cores <- as.integer(Sys.getenv("SLURM_CPUS_PER_TASK"))
+region_folders_to_process <- c("European_aquatic_invert") #"Australian_reptiles_mammals", "Finnish_plants", "US_birds"
+variables_to_process <- c("prec") #"hurs", "prec", "rsds", "tas", "tasmax", "tasmin"
 
 # LIST ALL FILES  ---------------------------------------------------------
 
@@ -35,6 +37,8 @@ n_cores <- 10
 ## list all files
 processed_files <- list.files(file.path(file_dir), pattern = ".tif", 
                         full.names = TRUE, recursive = T)
+if(length(grep("tmp",processed_files ))>0){
+  processed_files  <- processed_files [-grep("tmp",processed_files )]}
 
 # create a data.frame with all files
 df_processed_files <- stringr::str_split(processed_files, "/", simplify = TRUE) %>% 
@@ -67,6 +71,9 @@ df_processed_files <- df_processed_files %>%
 # list all files 
 chelsa_files <- list.files(file.path(chelsa_dir), pattern = ".tif", 
                         full.names = TRUE, recursive = T)
+chelsa_files <- chelsa_files[-grep("hurs",chelsa_files)]
+if(length(grep("tmp",chelsa_files ))>0){
+  chelsa_files  <- chelsa_files [-grep("tmp",chelsa_files )]}
 
 # create a data.frame with all files
 df_chelsa_files <- stringr::str_split(chelsa_files, "/", simplify = TRUE) %>% 
@@ -118,6 +125,10 @@ for (i in seq_along(chelsa_vars)) {
   names(scoffs_chelsa)[[i]] <- chelsa_vars[i]
 } # close loop over variables
 
+df_processed_files <- 
+  df_processed_files %>% 
+  filter(region_folder %in% region_folders_to_process, 
+         variable %in% variables_to_process)
 
 
 # PARALLELIZE --------------------------------------------------------

@@ -11,7 +11,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --time=5-00:00:00
-#SBATCH --cpus-per-task=10
+#SBATCH --cpus-per-task=1
 #SBATCH --mem=50gb
 
 Rscript  /mnt/ibb_share/zurell_transfer/Hauer_BMIP_data/processing_scripts/06_check_set_scoff.R --verbose
