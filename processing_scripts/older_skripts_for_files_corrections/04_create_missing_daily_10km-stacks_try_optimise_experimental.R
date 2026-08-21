@@ -236,18 +236,28 @@ print(df_processed %>%
         group_by(region,method, variable) %>%
         reframe(n.files = length(file)))
 
+# -------------------------------------------------------------------------
+### Identify variable year combinations that need to be processed
 
+expected_full_files = year_summary %>% 
+  expand(year,variable,region = regions, method = c("daily_10km","monthly_1km")) %>%
+  mutate(year = as.numeric(year))%>%
+  left_join(year_summary%>%mutate(year = as.numeric(year))) %>% 
+  left_join(df_processed%>%mutate(year = as.numeric(year)))
+
+missing_files = expected_full_files %>% 
+  filter(is.na(processed),
+         method == method_name,
+         complete == T) %>%
+  arrange(year, variable, region)
 
 
 # -------------------------------------------------------------------------
-##arrange year summary to better split over cores:
-year_summary <- year_summary %>%
-  arrange(variable,year,region)
 
 # 3. Set Up Parallel Processing -------------------------------------------
 
 ## split full data in even chunks to be send to the workers ---------------
-l <- dim(year_summary %>%
+l <- dim(missing_files %>%
            filter(complete == T))[1] # length of year ~ variable combinations of completly downloaded data
 x <- round(l/n_cores) # chunk size of tasks send to each worker
 from <- seq(1,l,x)
@@ -263,7 +273,8 @@ registerDoParallel(cl)
 
 idx_df
 
-
+print( missing_files %>%
+         filter(complete == T) %>% print(n=300))
 
 # -------------------------------------------------------------------------
 
@@ -274,18 +285,20 @@ cfun <- function(a, b) NULL
 foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse") , .combine = 'cfun'
                ) %dopar% {
 
-terra::terraOptions(threads = 1)
+#terra::terraOptions(threads = 1)
 
-    year_summary_sub <- year_summary %>%
+   missing_files_sub <- missing_files %>%
     filter(complete == T) %>%
     slice(idx_df$from[i]:idx_df$to[i])
+    
     #slice(idx_df$from[i]:idx_df$from[i]+1)
+    years_to_process <- unique(missing_files_sub$year)
+    #slice(idx_df$from[i]:idx_df$from[i]+1)
+    
+    regions = unique(missing_files_sub$region)
 
 ### loop over regions ------------------------------------------------
-  for (region in regions) {
-    
-    
-    
+for (region in regions) {
     # load region specific mask file
     mask_file_laea <- region_masks_meta[[region]]$mask_laea_file 
     mask_file_4326 <- region_masks_meta[[region]]$mask_4326_file
@@ -293,7 +306,7 @@ terra::terraOptions(threads = 1)
     mask_4326 <- terra::rast(mask_file_4326)  
   
   ## loop over variables -------------------------------------------------
-for (var_name in unique(year_summary_sub$variable)) {
+for (var_name in unique(missing_files_sub$variable)) {
   cat("\nProcessing", var_name, "for" ,region, "-----------------------\n")
     
 # read in mask at wgs84
@@ -306,7 +319,7 @@ for (var_name in unique(year_summary_sub$variable)) {
                                                    showWarnings = FALSE)}
       
       # check for only completely downloaded years
-      complete_years <- year_summary_sub %>%
+      complete_years <- missing_files_sub %>%
         filter(variable == var_name,
                complete == T) 
       
@@ -352,17 +365,17 @@ for (var_name in unique(year_summary_sub$variable)) {
         terra::time(yearly_stack) <- times
         
         #define gain or scale factor of the mask to be same as in the original files
-        #scoff(mask_laea) <- scoff(yearly_stack[[1]]) 
+        scoff(mask_laea) <- scoff(yearly_stack[[1]]) 
         
-        yearly_stack_crp <- terra::crop(yearly_stack, mask_4326, 
-                                    filename = tempfile(fileext = ".tif"),
-                                    overwrite = TRUE
+        yearly_stack_crp <- terra::crop(yearly_stack, mask_4326#, 
+                                    #filename = tempfile(fileext = ".tif"),
+                                    #overwrite = TRUE
                                     )
         rm(yearly_stack)
         # Process: project + mask + write
-        yearly_eq <- terra::project(yearly_stack_crp, mask_laea, method = "average",
-                                    filename = tempfile(fileext = ".tif"), 
-                                    overwrite = TRUE
+        yearly_eq <- terra::project(yearly_stack_crp, mask_laea, method = "average"#,
+                                    #filename = tempfile(fileext = ".tif"), 
+                                    #overwrite = TRUE
                                     )
         rm(yearly_stack_crp) 
         
@@ -381,9 +394,7 @@ for (var_name in unique(year_summary_sub$variable)) {
         yearly_mask = terra::mask(yearly_eq, mask_laea,
                     filename = tempfile(fileext = ".tif"), 
                     overwrite = TRUE)
-        terra::writeRaster(yearly_mask, out_file, 
-                           datatype = "FLT4S",
-                           overwrite = T)
+        terra::writeRaster(yearly_mask, out_file, overwrite = T)
         cat("Saved yearly stack:", basename(out_file), "\n")
         
         # Memory cleanup

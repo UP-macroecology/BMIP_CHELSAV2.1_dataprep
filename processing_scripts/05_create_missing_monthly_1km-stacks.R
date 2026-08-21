@@ -258,8 +258,12 @@ if (run_for_all_years) {
 
 # 3. Set Up Parallel Processing -------------------------------------------
 if(!is.null(var.to.exclude)){
-  year_summary = year_summary %>% filter(!variable %in% var.to.exclude)
+  year_summary <- year_summary %>% filter(!variable %in% var.to.exclude)
 }
+
+##arrange year summary to better split over cores:
+year_summary <- year_summary %>%
+  arrange(variable,year,region)
 
 ## split full data in even chunks to be send to the workers -----
 l <- dim(year_summary %>%
@@ -419,7 +423,10 @@ foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse"), .combine = co
         out_file <- file.path(region_out_dir, out_name)
         
         # save raster stack per year
-        terra::writeRaster(yearly_stack, out_file, overwrite = TRUE)
+        terra::writeRaster(yearly_stack, 
+                           out_file, 
+                           datatype = "FLT4S",
+                           overwrite = TRUE)
         cat("Saved yearly stack:", basename(out_file), "\n")
         
         # Memory cleanup                                        

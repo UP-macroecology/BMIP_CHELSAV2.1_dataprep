@@ -240,14 +240,25 @@ print(df_processed %>%
 
 
 # -------------------------------------------------------------------------
-##arrange year summary to better split over cores:
-year_summary <- year_summary %>%
-  arrange(variable,year,region)
+### Identify variable year combinations that need to be processed
+
+expected_full_files = year_summary %>% 
+  expand(year,variable,region = regions, method = c("daily_10km","monthly_1km")) %>%
+  mutate(year = as.numeric(year))%>%
+  left_join(year_summary%>%mutate(year = as.numeric(year))) %>% 
+  left_join(df_processed%>%mutate(year = as.numeric(year)))
+
+missing_files = expected_full_files %>% 
+  filter(is.na(processed),
+         method == method_name,
+         complete == T) %>%
+  arrange(year, variable, region)
+
 
 # 3. Set Up Parallel Processing -------------------------------------------
 
 ## split full data in even chunks to be send to the workers ---------------
-l <- dim(year_summary %>%
+l <- dim(missing_files %>%
            filter(complete == T))[1] # length of year ~ variable combinations of completly downloaded data
 x <- round(l/n_cores) # chunk size of tasks send to each worker
 from <- seq(1,l,x)
@@ -263,7 +274,8 @@ registerDoParallel(cl)
 
 idx_df
 
-
+print( missing_files %>%
+         filter(complete == T) %>% print(n=300))
 
 # -------------------------------------------------------------------------
 
@@ -274,28 +286,55 @@ cfun <- function(a, b) NULL
 foo <- foreach(i = 1:n_cores, .packages = c("terra", "tidyverse") , .combine = 'cfun'
                ) %dopar% {
 
-terra::terraOptions(threads = 1)
+#terra::terraOptions(threads = 1)
 
-    year_summary_sub <- year_summary %>%
+    missing_files_sub <- missing_files %>%
     filter(complete == T) %>%
     slice(idx_df$from[i]:idx_df$to[i])
+    
     #slice(idx_df$from[i]:idx_df$from[i]+1)
+    years_to_process <- unique(missing_files_sub$year)
+    cat(length(years_to_process), 
+        " years are completely downloaded and need to be processed on this core.\n")
+    
+    #cat(length(all_years) - length(years_to_process) - length(which(processed_years$year %in% all_years)), "are not completely downloaded and won't be processed.\n")
+    
+### loop over years ---------------------------------------------------
+for (yr in years_to_process) {
+  ## loop over variables -------------------------------------------------
+  for (var_name in unique(missing_files_sub$variable)) {
+    cat("\nProcessing", var_name, "-----------------------\n")
+      
+      print(paste("\n",var_name, "- Year:", yr, 
+                  "from", length(years_to_process)-which(yr == years_to_process), 
+                  "remaining years to process"))
+      
+      # Filter files
+      year_data <- df %>% 
+        filter(year == yr,
+               variable == var_name) %>%
+        arrange(date) %>%  # Chronological order
+        mutate(layer_name = paste0(variable, "_", day, "_", month, "_", year))
+      
+      year_files <- year_data$dir
+      layer_names <- year_data$layer_name
+      
+      # Stack YEARLY files
+      yearly_stack <- terra::rast(year_files)
+      
+      names(yearly_stack) <- layer_names
+      times <- as.Date(gsub(paste0(var_name,"_"), "",names(yearly_stack)), format = "%d_%m_%Y")
+      terra::time(yearly_stack) <- times
 
 ### loop over regions ------------------------------------------------
-  for (region in regions) {
-    
-    
-    
+  for (region in unique(missing_files_sub$region)) {
+    terraOptions(todisk = TRUE)
     # load region specific mask file
     mask_file_laea <- region_masks_meta[[region]]$mask_laea_file 
     mask_file_4326 <- region_masks_meta[[region]]$mask_4326_file
     mask_laea <- terra::rast(mask_file_laea) # read in mask at equal area
     mask_4326 <- terra::rast(mask_file_4326)  
   
-  ## loop over variables -------------------------------------------------
-for (var_name in unique(year_summary_sub$variable)) {
-  cat("\nProcessing", var_name, "for" ,region, "-----------------------\n")
-    
 # read in mask at wgs84
       
       # Create region output directory
@@ -306,50 +345,23 @@ for (var_name in unique(year_summary_sub$variable)) {
                                                    showWarnings = FALSE)}
       
       # check for only completely downloaded years
-      complete_years <- year_summary_sub %>%
-        filter(variable == var_name,
-               complete == T) 
-      
-      region_text <- region
-      
-      # extract all already processed years
-      processed_years <- df_processed %>% 
-        filter(method == method_name,
-               region == region_text,
-               variable == var_name)
-      
-      ### remove region-variable-year-combination which exist already
-      years_to_process <- complete_years$year[which(!complete_years$year %in% 
-                                                      processed_years$year)]
-      cat(length(years_to_process), 
-          " years are completely downloaded and need to be processed on this core.\n")
-      
-      #cat(length(all_years) - length(years_to_process) - length(which(processed_years$year %in% all_years)), "are not completely downloaded and won't be processed.\n")
+      # complete_years <- missing_files_sub %>%
+      #   filter(variable == var_name,
+      #          complete == T) 
+      # 
+      # region_text <- region
+      # 
+      # # extract all already processed years
+      # processed_years <- df_processed %>% 
+      #   filter(method == method_name,
+      #          region == region_text,
+      #          variable == var_name)
+      # 
+      # ### remove region-variable-year-combination which exist already
+      # years_to_process <- complete_years$year[which(!complete_years$year %in% 
+      #                                                 processed_years$year)]
       
       
-      ### loop over years ---------------------------------------------------
-      for (yr in years_to_process) {
-        
-        print(paste("\n",var_name, "- Year:", yr, 
-                    "from", length(years_to_process)-which(yr == years_to_process), 
-                    "remaining years to process"))
-        
-        # Filter files
-        year_data <- df %>% 
-          filter(year == yr,
-                 variable == var_name) %>%
-          arrange(date) %>%  # Chronological order
-          mutate(layer_name = paste0(variable, "_", day, "_", month, "_", year))
-        
-        year_files <- year_data$dir
-        layer_names <- year_data$layer_name
-        
-        # Stack YEARLY files
-        yearly_stack <- terra::rast(year_files)
-        
-        names(yearly_stack) <- layer_names
-        times <- as.Date(gsub(paste0(var_name,"_"), "",names(yearly_stack)), format = "%d_%m_%Y")
-        terra::time(yearly_stack) <- times
         
         #define gain or scale factor of the mask to be same as in the original files
         #scoff(mask_laea) <- scoff(yearly_stack[[1]]) 
@@ -379,8 +391,9 @@ for (var_name in unique(year_summary_sub$variable)) {
         
         # Write yearly stack
         yearly_mask = terra::mask(yearly_eq, mask_laea,
-                    filename = tempfile(fileext = ".tif"), 
+                      filename = tempfile(fileext = ".tif"), 
                     overwrite = TRUE)
+        
         terra::writeRaster(yearly_mask, out_file, 
                            datatype = "FLT4S",
                            overwrite = T)
@@ -391,14 +404,14 @@ for (var_name in unique(year_summary_sub$variable)) {
         tmpFiles(remove = T)
         gc()
         
-      } # close loop over complete years
+      } # close loop over regions
       
       rm(mask_laea, mask_4326)
       gc()
       
-    } # close loop over regions
+    } # close loop over variables
     
-  } # close loop over variables
+  } # close loop over complete years
 } #close parallel loop
 
 stopImplicitCluster()

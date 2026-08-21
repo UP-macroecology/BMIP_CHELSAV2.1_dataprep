@@ -131,7 +131,7 @@ all_dirs <- list.dirs(transfer_dir)
 monthly_dirs <- all_dirs[grep("monthly_1km",all_dirs)]
 #monthly_dirs < all_dirs[grep("monthly_10km",all_dirs)]
 
-variable <- "prec"
+variable <- "tas"
 monthly_files <- list.files(monthly_dirs, full.names = TRUE, pattern = "\\.tif$")
 #monthly_files <- monthly_files[-grep("pr",monthly_files)]
 #monthly_files <- list.files(monthly_dirs,full.names = T)
@@ -139,6 +139,7 @@ monthly_files <- list.files(monthly_dirs, full.names = TRUE, pattern = "\\.tif$"
 monthly_files <- monthly_files[grep(variable,monthly_files)]
 #monthly_files <- monthly_files[grep("prec",monthly_files)]
 
+#monthly_files <- monthly_files[-grep("Europe",monthly_files)]
 monthly_files <- monthly_files[grep("Australia",monthly_files)]
 #monthly_files <- monthly_files[grep("Finnish",monthly_files)]
 #monthly_files <- monthly_files[1:4]
@@ -170,15 +171,17 @@ overview_data = do.call(rbind,overview_data)
 #overview_data = overview_data[-grep("monthly_1km/rsds",overview_data)]
 
 ### plot and save ----------
-ggplot(data = overview_data, aes(x = year(date), y = mean, group = year(date)))+
+ggplot(data = overview_data, aes(x = year(date), 
+                                 y = mean, group = year(date)))+
   facet_grid(variable~site,scales = "free_y")+
   geom_boxplot()
 
 ggsave(filename = paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/",variable,"_monthly_10km_state",Sys.Date(),".png"),
        width = 28, height = 10, units = "cm", dpi = 100)
 
-# check single year raw data ---------
 
+
+# check single year raw data ---------
 mask_dir <- file.path(transfer_dir, "mask_files")
 yr <- 1941
 var <- "prec"
@@ -207,6 +210,7 @@ year_proj <- rast(proj_file)
 year_proj <- terra::project(region_year_stack,year_proj)
 
 plot(year_proj)
+
 # check and correct mask files ---------------
 
 mask_dir <- file.path(transfer_dir, "mask_files")
@@ -221,15 +225,13 @@ mask_file <- mask_file[grep(paste0(res,"km"),mask_file)]
 yr_mask = rast(mask_file)
 plot(yr_mask)
 #foo <- ifel(yr_mask < 100000000,0,10) # For Europe EPSG4326
-#foo <- ifel(yr_mask >=0,10,yr_mask) # For Europe buffer
+foo <- ifel(yr_mask >=0,1,yr_mask) # For Europe buffer
 foo <- ifel(yr_mask > 0,1,yr_mask) # For redoing
 plot(foo)
 
-# writeRaster(foo, file = paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
-#                                "mask_",region,"_",proji,"_",res,"km_01.tif"),
-#             scale  = 0.1, 
-#             offset = 0,
-#             overwrite=T)
+writeRaster(foo, file = paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
+                               "mask_",region,"_",proji,"_",res,"km_01.tif"),
+            overwrite=T)
 # 
 # fin <- rast( paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
 #                     "mask_",region,"_",proji,"_",res,"km_01.tif"))
@@ -237,4 +239,23 @@ plot(fin)
 scoff(fin)
 
 
-# mask behaviour
+# mask behaviour testing
+
+# writeRaster(year_mask, file = paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
+#                                "00_Testmask.tif"),
+#             scale  = 0.1,
+#             offset = 0,
+#             datatype = datatype(year_stack[[1]]),
+#             overwrite=T)
+# writeRaster(region_year_stack, file = paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
+#                                      "00_Testcrop.tif"),
+#             scale  = 0.1,
+#             offset = 0,
+#             datatype = datatype(year_stack[[1]]),
+#             overwrite=T)
+# 
+# year_mask = rast(paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
+#                         "00_Testmask2.tif"))
+# testcrop = rast(paste0("/home/robert/Documents/00_GitHub_Macro/BMIP_CHELSAV2.1_dataprep/mask_files/",
+#                         "00_Testcrop.tif"))
+# scoff(year_mask)
