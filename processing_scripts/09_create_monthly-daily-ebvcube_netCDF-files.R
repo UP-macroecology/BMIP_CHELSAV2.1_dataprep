@@ -20,6 +20,9 @@ library(ebvcube)
 library(terra)
 library(tidyverse)
 library(stringr)
+library(future)
+library(furrr)
+
 
 
 # directories -------------------------------------------------------------
@@ -50,10 +53,34 @@ methods <- c("daily_10km",          # daily climate values, cropped to region an
 )
 
 ## set NA as fill value - constant for all cubes
-fv <- NA
+fv <- 9.9692099683868690e+36 # fill value from CF convention for float datatypes: https://docs.unidata.ucar.edu/netcdf-c/current/file_format_specifications.html (See also: https://cfconventions.org/cf-conventions/cf-conventions.html#missing-data)
+
+# runs for a single year, single variable and FINLAND MONTHLY
+testing <- TRUE # set to FALSE for full run
+one_year_only <- testing
 
 
 
+
+# Setting filters  --------------------------------------------------------
+
+# manually set filters for the data addding
+
+# these variables are included in the ebv_add_data
+filter_vars <- c(
+  "prec", 
+  "tas",
+  "tasmin", 
+  "tasmax", 
+  "rsds", 
+  # "hurs"
+  )
+
+
+# only those years are included in the ebv_add_data
+start_year <- 1941
+end_year   <- 2024
+filter_years <- start_year:end_year
 
 
 
@@ -74,6 +101,7 @@ names(df_all_files) <- c("region_folder", "type", "sphere", "method", "variable"
 df_all_files$year <- as.numeric(gsub("*.tif", "", df_all_files$file))
 df_all_files$region = names(region_folder_names)[match(df_all_files$region_folder,region_folder_names)]
 df_all_files$full_path <- all_files
+df_all_files <- na.omit(df_all_files)
 
 # remove the variable 'pr' from the df -  we are only using 'prec' 
 df_all_files <- df_all_files %>% 
@@ -100,38 +128,52 @@ names(ebv_chunks) <- gsub("\\.", "-", names(ebv_chunks))
 # only select chunks with data
 ebv_chunks <- ebv_chunks[sapply(ebv_chunks, nrow) > 0]
 
-
+cat("Building ebvcubes for: \n")
+for (i in names(ebv_chunks)) {
+  cat(" -", i, "\n")
+}
 
 
 #  extracting the raster metadata -----------------------------------------
 
-# using a function
-extract.raster.meta <- function(r_file) {  # needs a full file path to a raster file
+# a helper function
+extract.raster.meta <- function(r_file) { # needs a full file path to a raster file
   require(terra, quietly = TRUE)
-  require(dplyr, quietly = TRUE)
   
   # read in file as raster
-  r <- terra::rast(r_file) 
+  r <- terra::rast(r_file)
   
-  # extract extent as named vector
-  region_ext <- terra::ext(r)[1:4]           
-  
-  # extract epsg code from SpatRaster
-  region_epsg <- terra::crs(r, describe = TRUE) %>% # extract crs information 
-    dplyr::select(code) %>%                         # only slect epsg code
-    as.numeric()                             # transfrom to numeric
-  
-  # extract spatial resolution
+  # extract extent as named vector and spatial resolution
+  region_ext <- terra::ext(r)[1:4]
   region_res <- terra::res(r)
   
-  # combine into list and return
-  raster_metadata <- list(
-    extent     = region_ext, 
-    epsg       = region_epsg, 
-    resolution = region_res
-  )
-  return(raster_metadata)
-} # end function 
+  # extract epsg code from SpatRaster
+  crs_info <- terra::crs(r, describe = TRUE)
+  
+  # if there is an epsg code available use this
+  if (!is.na(crs_info$code) && crs_info$authority == "EPSG") {
+    region_epsg <- as.numeric(crs_info$code)
+  } else {
+    # if there is no epsg code available -> check PROJ name
+    wkt  <- terra::crs(r)
+    name <- sub('.*PROJCRS\\["([^"]+)".*', '\\1', wkt)
+    
+    # connect ESRI strings to the PROJ names
+    esri_lookup <- c(
+      "USA_Contiguous_Albers_Equal_Area_Conic" = "ESRI:102003"
+    )
+    
+    # store ESRI string for matching PROJ names only
+    if (name %in% names(esri_lookup)) {
+      region_epsg <- esri_lookup[[name]]
+    } else {
+      stop(paste("No EPSG or known ESRI match for CRS:", name))
+    }
+  }
+  
+  # return a list of raster metadata
+  list(extent = region_ext, epsg = region_epsg, resolution = region_res)
+} # end function
 
 # and extracting the data into a list element per chunk
 raster_metadata <- map(ebv_chunks, function(df) {
@@ -150,7 +192,8 @@ raster_metadata <- map(ebv_chunks, function(df) {
 ### I only managed that by hand now...
 json_files <- list.files("GEOBON_uploading/json_files", 
                          pattern = ".json",
-                         full.names = TRUE) 
+                         full.names = TRUE) %>% 
+  str_subset(pattern = paste(methods, collapse = "|"))
 
 ## file path to new netCDF files
 new_nc_paths <- file.path("GEOBON_uploading", "nc_files", 
@@ -162,9 +205,14 @@ new_nc_paths <- file.path("GEOBON_uploading", "nc_files",
 # create empty netCDF -----------------------------------------------------
 
 ## --- testing
-ebv_chunks <- ebv_chunks[grep("Finland", names(ebv_chunks))] # select finland only, as we don't have more json files at the moment.
-# monthly only
-ebv_chunks <- ebv_chunks[grep("monthly", names(ebv_chunks))]
+if (testing) {
+  ebv_chunks <- ebv_chunks[grep("USA", names(ebv_chunks))] # select finland only, as we don't have more json files at the moment.
+  # monthly only
+  # ebv_chunks <- ebv_chunks[grep("monthly", names(ebv_chunks))]
+  # new_nc_paths <- file.path("/home/josh/Dokumente/HiWi/MacroEco/BMIP/ebvcube", paste0(names(ebv_chunks), ".nc"))
+  new_nc_paths <- file.path("GEOBON_uploading", "nc_files", paste0(names(ebv_chunks), ".nc"))
+  cat("Testing only for:", names(ebv_chunks), "\nstored under:", new_nc_paths)
+}
 #---
 
 # create the new netCDF files at the path locations set up above
@@ -184,21 +232,51 @@ iwalk(ebv_chunks, function(df, name) {
              epsg = meta$epsg, 
              extent = meta$extent, 
              resolution = meta$resolution,
+             # prec = "float", 
              overwrite = TRUE, verbose = FALSE)
+  
+  cat("Created new netCDF for:", name, 
+      "\nstored under:", new_nc, "\nwith json:", json, "\n")
 })
+
+
+
+
+
+
+# filter using filter objects ---------------------------------------------
+
+ebv_chunks <- map(ebv_chunks, function(df) {
+  df <- df %>% 
+    dplyr::filter(variable %in% filter_vars, 
+                  year     %in% filter_years)
+  df
+})
+
+
+
+# -------------------------------------------------------------------------
+
+# Paralell processing  ----------------------------------------------------
+
+if (!testing) {
+  n_cores <- as.integer(Sys.getenv("SLURM_CPUS_PER_TASK"))
+  cat("CLUSTER: Parallel processing on", n_cores, "cores\n")
+} else {
+  n_cores <- 2
+  cat("LOCAL: Parallel processing on", n_cores, "cores\n")
+}
+
+# start multisession ----
+future::plan(multisession, workers = n_cores)
 
 
 
 # add data to empty netCDF ------------------------------------------------
 
-## testing --
-one_month_only <- TRUE
-## ---
-
-
 
 # walk over each chunk ---
-iwalk(ebv_chunks, function(df, name) {
+future_iwalk(ebv_chunks, function(df, name) {
   
   # grep the nc file name for that chunk
   new_nc <- grep(name, new_nc_paths, value = TRUE)
@@ -235,6 +313,9 @@ iwalk(ebv_chunks, function(df, name) {
     ## walk over tif files ---
     walk(tif_paths, function(tif) {
       
+      cat("Adding data for year:", tif_counter, "from", length(tif_paths), "total years\n",
+          "- path to tif:", tif,  "\n")
+      
       # read in a the tif file
       r <- terra::rast(tif)
       
@@ -243,12 +324,6 @@ iwalk(ebv_chunks, function(df, name) {
       
       # extract the number of layers for this tif
       n_lyr <- terra::nlyr(r)
-      
-      cat("Adding data for year:", tif_counter, "from", length(tif_paths), "total years\n",
-          "- filepath:", tif,  "\n")
-      
-      # # match entity dates with the tif dates for a unique identifier and correct timestep
-      # step_id <- match(tif_dates, chunk_entities)
       
       if (anyNA(tif_dates) || length(tif_dates) != n_lyr) {
         stop("Layer-Date invalid for: ", tif)
@@ -266,17 +341,18 @@ iwalk(ebv_chunks, function(df, name) {
       
       tif_counter <-  tif_counter + 1 # update counter
       
-      if (one_month_only) stop("TEST DONE")
+      if (only_one_year) stop("TEST DONE")
     }) # close loop over tifs. 
   }) # close loop over variables
 }) # close loop over chunk/cube. 
 
+# stop multisession
+future::plan(sequential)
 
 
 
 
-
-# # # Testing --------------------
+# # # # Testing --------------------
 # new_nc <- grep(names(ebv_chunks), new_nc_paths, value = TRUE)
 # 
 # # general properties
@@ -301,13 +377,14 @@ iwalk(ebv_chunks, function(df, name) {
 # d <- ebv_read(new_nc, # the path to the netCDF file
 #               datacubes[4, 1], # selecting cube 4 from the EBV netCDF ( = prec)
 #               entity = 1,
-#               timestep = 1, type = "r") # this is the first timestep (month 1, year 1941)
+#               timestep = as.character(tif_dates)[1], type = "r") # this is the first timestep (month 1, year 1941)
 # summary(d)
 # 
 # # same SpatRaster after processing read directly from tif file
-# r <- terra::rast("GEOBON_results/Finnish_plants/envdat/clim/monthly_1km/prec/1941.tif")
-# minmax(r[[1]])
+# r <- terra::rast("GEOBON_results/Finnish_plants/envdat/clim/monthly_1km/prec/1979.tif")
+# summary(r[[1]])
 # 
 # 
 # # plotting
-# ebv_map(new_nc, datacubes[4, 1], entity = 1, timestep = 1, verbose = FALSE)
+# ebv_map(new_nc, datacubes[4, 1], entity = 1, timestep = 1, verbose = FALSE, classes = 9)
+
