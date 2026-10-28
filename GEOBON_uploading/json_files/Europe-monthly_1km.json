@@ -1,0 +1,116 @@
+{
+    "code": 200,
+    "message": "Preliminary metadata",
+    "data": {
+        "id": "115",
+        "naming_authority": "The German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig",
+        "title": "Monthly Climate Variables for Europe at 1 km resolution from CHELSA V2.1",
+        "product_version": "pending",
+        "doi": "pending",
+        "date_created": "2026-04-23",
+        "date_issued": "pending",
+        "summary": "A subset of the CHELSA V2.1 ( https://www.chelsa-climate.org/datasets ) climatic variables were aggregated to a monthly 1 km * 1 km resolution and clipped to Europe plus a 250 km buffer. Provided variables are: Daily Mean Near-Surface Air Temperature (tas) Daily Maximum Near-Surface Air Temperature (tasmax) Daily Minimum Near-Surface Air Temperature (tasmin) Precipitation (prec, diffrent from 'pr' which is bias-corrected) Surface Downwelling Shortwave Flux in Air (rsds) Near-Surface Relative Humidity (hurs)",
+        "keywords": "pending",
+        "references": "N/A",
+        "source": "This data set is based on the CHELSA V2.1 data (https://www.chelsa-climate.org/datasets/chelsa_daily ; Karger, D. N. (2025). https://www.doi.org/10.16904/envidat.687 ) and was prepared using the terra R-package (https://rspatial.github.io/terra/ )",
+        "coverage_content_type": [
+            "modelResult",
+            "coordinate"
+        ],
+        "project_name": "N/A",
+        "project_url": "N/A",
+        "creator": {
+            "creator_name": "Damaris Zurell",
+            "creator_email": "rohering@uni-potsdam.de",
+            "creator_institution": "University of Potsdam",
+            "creator_url": "N/A"
+        },
+        "contributor_name": [
+            "N/A"
+        ],
+        "license": "https://creativecommons.org/publicdomain/zero/1.0",
+        "publisher": {
+            "publisher_name": "Robert Hering",
+            "publisher_email": "rohering@uni-potsdam.de",
+            "publisher_institution": "University of Potsdam",
+            "publisher_url": "N/A"
+        },
+        "ebv": {
+            "ebv_class": "Cross-cutting",
+            "ebv_name": "Cross-cutting"
+        },
+        "ebv_entity": {
+            "ebv_entity_type": "None",
+            "ebv_entity_scope": "",
+            "ebv_entity_classification_name": "N/A",
+            "ebv_entity_classification_url": "N/A",
+            "ebv_entity_names": "pending",
+            "ebv_entity_taxonomy_levels": "pending",
+            "ebv_entity_taxonomy_table": "pending"
+        },
+        "ebv_metric": {
+            "ebv_metric_1": {
+                ":standard_name": "Monthly Mean Near-Surface Air Temperature (tas)",
+                ":long_name": "near-surface (usually 2 meter) air temperature",
+                ":units": "K"
+            },
+            "ebv_metric_2": {
+                ":standard_name": "Monthly Maximum Near-Surface Air Temperature (tasmax)",
+                ":long_name": "near-surface (usually 2 meter) air temperature",
+                ":units": "K"
+            },
+            "ebv_metric_3": {
+                ":standard_name": "Monthly Minimum Near-Surface Air Temperature (tasmin)",
+                ":long_name": "near-surface (usually 2 meter) air temperature",
+                ":units": "K"
+            },
+            "ebv_metric_4": {
+                ":standard_name": "Monthly Precipitation (prec)",
+                ":long_name": "includes both liquid and solid phases, not yet bias corrected data representing downscaled forecasted precipitation from ERA5. Should not be mixed with pr",
+                ":units": "kg m-2 month-1"
+            },
+            "ebv_metric_5": {
+                ":standard_name": "Surface Downwelling Shortwave Flux in Air (rsds)",
+                ":long_name": "Surface solar irradiance for UV calculations.",
+                ":units": "W m-2"
+            },
+            "ebv_metric_6": {
+                ":standard_name": "Near-Surface Relative Humidity (hurs)",
+                ":long_name": "The relative humidity with respect to liquid water for T> 0 C and with respect to ice for T",
+                ":units": "percent"
+            }
+        },
+        "ebv_scenario": "N/A",
+        "ebv_geospatial": {
+            "ebv_geospatial_scope": "Continental/Regional",
+            "ebv_geospatial_description": "Europe"
+        },
+        "geospatial_lat_resolution": "pending",
+        "geospatial_lon_resolution": "pending",
+        "geospatial_bounds_crs": "pending",
+        "geospatial_lat_min": "pending",
+        "geospatial_lon_min": "pending",
+        "geospatial_lat_max": "pending",
+        "geospatial_lon_max": "pending",
+        "time_coverage": {
+            "time_coverage_resolution": "P0000-01-00",
+            "time_coverage_start": "1941-01-01",
+            "time_coverage_end": "2024-12-01"
+        },
+        "ebv_domain": [
+            "Terrestrial",
+            "Marine",
+            "Freshwater"
+        ],
+        "comment": "CHELSA V2.1 data, aggregated (mean) to 1 km resolution and clipped to Europe.",
+        "dataset": {
+            "pathname": "pending",
+            "download": "pending",
+            "metadata_json": "pending",
+            "metadata_xml": "pending"
+        },
+        "file": {
+            "download": "pending"
+        }
+    }
+}

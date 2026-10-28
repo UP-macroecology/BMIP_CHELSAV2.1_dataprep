@@ -1,0 +1,181 @@
+{
+    "code": 200,
+    "message": "Preliminary metadata",
+    "data": {
+        "id": "126",
+        "naming_authority": "The German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig",
+        "title": "Annual Bioclimatic Variables for Australian Wet Tropics at 10 km resolution from CHELSA V2.1",
+        "product_version": "pending",
+        "doi": "pending",
+        "date_created": "2026-09-10",
+        "date_issued": "pending",
+        "summary": "The 19 bioclimatic variables, calculated from a subset of the CHELSA V2.1 ( https://www.chelsa-climate.org/datasets ) climatic variables (tasmax, tasmin and prec) at 1 km * 1km spatial resolution, were aggregated to a 10 km * 10 km spatial resolution and clipped to Australian Wet Tropics plus a 250 km buffer. The 19 bioclimatic variables are: Mean Annual Near-Surface Air Temperature (bio01) Mean Diurnal Near-Surface Air Temperature Range (bio02) Isothermality (bio03) Temperature Seasonality (bio04) Mean Daily Maximum Near-Surface Air Temperature of the Warmest Month (bio05) Mean Daily Minimum Near-Surface Air Temperature of the Coldest Month (bio06) Annual Daily Mean Near-Surface Air Temperature Range (bio07) Mean Daily Near-Surface Air Temperature of the Wettest Quarter (bio08) Mean Daily Near-Surface Air Temperature of the Driest Quarter (bio09) Mean Daily Mean Near-Surface Air Temperature of the Warmest Quarter (bio10) Mean Daily Mean Near-Surface Air Temperature of the Quarter (bio11) Annual Precipitation (bio12) Precipitation of the Wettest Month (bio13) Precipitation of the Driest Month (bio14) Precipitation Seasonality (bio15) Mean Monthly Precipitation of the Wettest Quarter (bio16) Mean Monthly Precipitation of the Driest Quarter (bio17) Mean Monthly Precipitation of the Warmest Quarter (bio18)",
+        "keywords": "pending",
+        "references": "N/A",
+        "source": "This data set is based on the CHELSA V2.1 data (https://www.chelsa-climate.org/datasets/chelsa_daily ; Karger, D. N. (2025). https://www.doi.org/10.16904/envidat.687 ) and was prepared using the R-packages terra (https://rspatial.github.io/terra/) and predicts (https://github.com/rspatial/predicts)",
+        "coverage_content_type": [
+            "modelResult",
+            "coordinate"
+        ],
+        "project_name": "N/A",
+        "project_url": "N/A",
+        "creator": {
+            "creator_name": "Damaris Zurell",
+            "creator_email": "rohering@uni-potsdam.de",
+            "creator_institution": "University of Potsdam",
+            "creator_url": "N/A"
+        },
+        "contributor_name": [
+            "N/A"
+        ],
+        "license": "https://creativecommons.org/publicdomain/zero/1.0",
+        "publisher": {
+            "publisher_name": "Robert Hering",
+            "publisher_email": "rohering@uni-potsdam.de",
+            "publisher_institution": "University of Potsdam",
+            "publisher_url": "N/A"
+        },
+        "ebv": {
+            "ebv_class": "Cross-cutting",
+            "ebv_name": "Cross-cutting"
+        },
+        "ebv_entity": {
+            "ebv_entity_type": "None",
+            "ebv_entity_scope": "",
+            "ebv_entity_classification_name": "N/A",
+            "ebv_entity_classification_url": "N/A",
+            "ebv_entity_names": "pending",
+            "ebv_entity_taxonomy_levels": "pending",
+            "ebv_entity_taxonomy_table": "pending"
+        },
+        "ebv_metric": {
+            "ebv_metric_1": {
+                ":standard_name": "Mean Annual Near-Surface Air Temperature (bio01)",
+                ":long_name": "Mean annual temperature calculated as the average of mean monthly temperatures over the year",
+                ":units": "°C"
+            },
+            "ebv_metric_2": {
+                ":standard_name": "Mean Diurnal Near-Surface Air Temperature Range (bio02)",
+                ":long_name": "Mean diurnal temperature range computed as the average of monthly (tasmax − tasmin)",
+                ":units": "°C"
+            },
+            "ebv_metric_3": {
+                ":standard_name": "Isothermality (bio03)",
+                ":long_name": "Isothermality: 100 × (bio02 ÷ bio07); compares day–night variability to annual temperature range",
+                ":units": "°C"
+            },
+            "ebv_metric_4": {
+                ":standard_name": "Temperature Seasonality (bio04)",
+                ":long_name": "Temperature seasonality given by the standard deviation of mean monthly temperatures",
+                ":units": "°C/100"
+            },
+            "ebv_metric_5": {
+                ":standard_name": "Mean Daily Maximum Near-Surface Air Temperature of the Warmest Month (bio05)",
+                ":long_name": "Highest monthly mean of daily maximum temperatures (tasmax) across the year; indicates peak thermal conditions",
+                ":units": "°C"
+            },
+            "ebv_metric_6": {
+                ":standard_name": "Mean Daily Minimum Near-Surface Air Temperature of the Coldest Month (bio06)",
+                ":long_name": "Lowest monthly mean of daily minimum temperatures (tasmin) across the year; characterizes winter cold intensity",
+                ":units": "°C"
+            },
+            "ebv_metric_7": {
+                ":standard_name": "Annual Daily Mean Near-Surface Air Temperature Range (bio07)",
+                ":long_name": "Annual temperature range calculated as bio05 − bio06; measures amplitude between warmest and coldest months",
+                ":units": "°C"
+            },
+            "ebv_metric_8": {
+                ":standard_name": "Mean Daily Near-Surface Air Temperature of the Wettest Quarter (bio08)",
+                ":long_name": "Average monthly mean temperature over the wettest 3-month period of the year",
+                ":units": "°C"
+            },
+            "ebv_metric_9": {
+                ":standard_name": "Mean Daily Near-Surface Air Temperature of the Driest Quarter (bio09)",
+                ":long_name": "Average monthly mean temperature over the driest 3-month period of the year",
+                ":units": "°C"
+            },
+            "ebv_metric_10": {
+                ":standard_name": "Mean Daily Mean Near-Surface Air Temperature of the Warmest Quarter (bio10)",
+                ":long_name": "Average monthly mean temperature over the warmest 3-month period of the year",
+                ":units": "°C"
+            },
+            "ebv_metric_11": {
+                ":standard_name": "Mean Daily Mean Near-Surface Air Temperature of the Quarter (bio11)",
+                ":long_name": "Average monthly mean temperature over the coldest 3-month period of the year",
+                ":units": "°C"
+            },
+            "ebv_metric_12": {
+                ":standard_name": "Annual Precipitation (bio12)",
+                ":long_name": "Sum of monthly precipitation totals across the year",
+                ":units": "kg m-2 year-1"
+            },
+            "ebv_metric_13": {
+                ":standard_name": "Precipitation of the Wettest Month (bio13)",
+                ":long_name": "Maximum monthly precipitation total",
+                ":units": "kg m-2 month-1"
+            },
+            "ebv_metric_14": {
+                ":standard_name": "Precipitation of the Driest Month (bio14)",
+                ":long_name": "Minimum monthly precipitation total",
+                ":units": "kg m-2 month-1"
+            },
+            "ebv_metric_15": {
+                ":standard_name": "Precipitation Seasonality (bio15)",
+                ":long_name": "Coefficient of variation (100 × SD ÷ mean) of monthly precipitation totals",
+                ":units": "kg m-2"
+            },
+            "ebv_metric_16": {
+                ":standard_name": "Mean Monthly Precipitation of the Wettest Quarter (bio16)",
+                ":long_name": "Average monthly precipitation during the wettest 3-month period of the year",
+                ":units": "kg m-2 month-1"
+            },
+            "ebv_metric_17": {
+                ":standard_name": "Mean Monthly Precipitation of the Driest Quarter (bio17)",
+                ":long_name": "Average monthly precipitation during the driest 3-month period of the year",
+                ":units": "kg m-2 month-1"
+            },
+            "ebv_metric_18": {
+                ":standard_name": "Mean Monthly Precipitation of the Warmest Quarter (bio18)",
+                ":long_name": "Average monthly precipitation during the warmest 3-month period of the year",
+                ":units": "kg m-2 month-1"
+            },
+            "ebv_metric_19": {
+                ":standard_name": "Mean Monthly Precipitation of the Coldest Quarter (bio19)",
+                ":long_name": "Average monthly precipitation during the coldest 3-month period of the year",
+                ":units": "kg m-2 month-1"
+            }
+        },
+        "ebv_scenario": "N/A",
+        "ebv_geospatial": {
+            "ebv_geospatial_scope": "Sub-national/Local",
+            "ebv_geospatial_description": "Australia, Wet Tropics"
+        },
+        "geospatial_lat_resolution": "pending",
+        "geospatial_lon_resolution": "pending",
+        "geospatial_bounds_crs": "pending",
+        "geospatial_lat_min": "pending",
+        "geospatial_lon_min": "pending",
+        "geospatial_lat_max": "pending",
+        "geospatial_lon_max": "pending",
+        "time_coverage": {
+            "time_coverage_resolution": "P0001-00-00",
+            "time_coverage_start": "1941-01-01",
+            "time_coverage_end": "2025-01-01"
+        },
+        "ebv_domain": [
+            "Terrestrial",
+            "Marine",
+            "Freshwater"
+        ],
+        "comment": "N/A",
+        "dataset": {
+            "pathname": "pending",
+            "download": "pending",
+            "metadata_json": "pending",
+            "metadata_xml": "pending"
+        },
+        "file": {
+            "download": "pending"
+        }
+    }
+}
